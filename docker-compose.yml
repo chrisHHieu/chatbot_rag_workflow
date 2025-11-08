@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # FastAPI Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: llmops_rag_backend
+    environment:
+      # API Keys
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # Database (connect to external PostgreSQL server)
+      POSTGRES_URI: ${POSTGRES_URI}
+      DB_URI: ${DB_URI:-${POSTGRES_URI}}
+      # LangSmith (optional)
+      LANGSMITH_TRACING: ${LANGSMITH_TRACING:-false}
+      LANGSMITH_ENDPOINT: ${LANGSMITH_ENDPOINT:-}
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
+      LANGSMITH_PROJECT: ${LANGSMITH_PROJECT:-rag_chat}
+      # Environment
+      ENV: production
+      # Config path (optional)
+      CONFIG_PATH: ${CONFIG_PATH:-}
+    volumes:
+      - ./data:/app/data
+      - ./faiss_index:/app/faiss_index
+      - ./logs:/app/logs
+      - ./multi_doc_chat/config:/app/multi_doc_chat/config
+    ports:
+      - "${BACKEND_PORT:-8100}:8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    network_mode: bridge
+

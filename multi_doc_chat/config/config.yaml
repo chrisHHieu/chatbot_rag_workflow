@@ -1,0 +1,62 @@
+# Configuration for Hybrid RAG System with LangGraph
+
+embedding_model:
+  provider: "openai"
+  model_name: "text-embedding-3-large"
+
+# Hybrid Retriever Configuration
+hybrid_retriever:
+  vector_weight: 0.7  # Weight for vector/semantic search
+  bm25_weight: 0.3     # Weight for keyword/BM25 search
+  vector_k: 14         # Top k results from vector search
+  bm25_k: 6          # Top k results from BM25 search
+  search_type: "mmr"   # MMR for diversity
+  fetch_k: 20         # Documents to fetch before MMR re-ranking
+  lambda_mult: 0.5    # Diversity parameter (0=max diversity, 1=max relevance)
+
+# Text Splitting Configuration
+text_splitter:
+  chunk_size: 1000        # 1000 TOKENS (when use_tiktoken=true) or characters (when false)
+  chunk_overlap: 150      # 150 TOKENS overlap
+  add_start_index: true
+  use_tiktoken: true      # Enable token-based splitting (recommended for production)
+                          # Uses o200k_base encoding for gpt-4.1-mini, cl100k_base for embeddings
+
+# LLM Configuration
+llm:
+  response:
+    provider: "openai"
+    model_name: "gpt-4.1-mini"
+    temperature: 0.3
+  
+  grader:
+    provider: "openai"
+    model_name: "gpt-4.1-mini"
+    temperature: 0
+
+# Summarization Configuration - Optimized for gpt-4.1-mini (1M context window)
+summarization:
+  max_tokens: 8000                    # Max tokens for summary generation (increased for detailed summaries)
+  temperature: 0.1                    # Low temperature for accurate, consistent summaries
+  max_tokens_total: 150000           # 90% of 1M context window (leaves 100K buffer for system prompts, tools, overhead)
+  max_tokens_before_summary: 100000   # Trigger summarization at 70% (700K tokens) - maximizes memory retention
+  max_summary_tokens: 8000                     # Detailed summary to preserve more information including citations
+
+# Message Trimming Configuration
+# NOTE: Message trimming is DISABLED - using only SummarizationNode for token management
+# SummarizationNode automatically manages token limits (max_tokens_total: 900000)
+# and creates summaries when threshold is reached (max_tokens_before_summary: 700000)
+# message_trimming:
+#   strategy: "last"
+#   max_tokens: 6000
+#   start_on: "human"
+#   end_on: ["human", "tool"]
+#   include_system: true
+
+# File Upload Limits Configuration
+file_limits:
+  max_file_size_mb: 20          # Maximum file size per file (MB)
+  max_session_size_mb: 100       # Maximum total size per session (MB)
+  max_files_per_session: 15      # Maximum number of files per session
+  warning_threshold_mb: 15       # Warning threshold for file size (MB)
+

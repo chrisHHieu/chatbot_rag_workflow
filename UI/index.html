@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Enterprise Knowledge Chat</title>
+  <!-- Inter Font (Main UI) - Optimized for screens, best for production -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- IBM Plex Mono (Code blocks) -->
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Custom scrollbar - Auto-hide khi không scroll */
+    .scrollbar-auto-hide {
+      scrollbar-width: thin;
+      scrollbar-color: transparent transparent;
+    }
+    .scrollbar-auto-hide::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    .scrollbar-auto-hide::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .scrollbar-auto-hide::-webkit-scrollbar-thumb {
+      background: transparent;
+      border-radius: 10px;
+      transition: background 0.3s ease;
+    }
+    /* Hiển thị scrollbar khi hover hoặc đang scroll */
+    .scrollbar-auto-hide:hover::-webkit-scrollbar-thumb,
+    .scrollbar-auto-hide.scrolling::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.4);
+    }
+    .scrollbar-auto-hide:hover::-webkit-scrollbar-thumb:hover,
+    .scrollbar-auto-hide.scrolling::-webkit-scrollbar-thumb:hover {
+      background: rgba(100, 116, 139, 0.6);
+    }
+    /* Horizontal scrollbar styling - chỉ hiển thị khi cần */
+    .scrollbar-auto-hide::-webkit-scrollbar:horizontal {
+      height: 8px;
+    }
+    /* Smooth scrolling */
+    .scrollbar-auto-hide {
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+
+    /* ✅ Scrollbar luôn hiển thị cho ChatTabs (màu rõ ràng) */
+    .scrollbar-visible {
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 #f1f5f9;
+    }
+    .scrollbar-visible::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    .scrollbar-visible::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 10px;
+    }
+    .scrollbar-visible::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 10px;
+      border: 2px solid #f1f5f9;
+    }
+    .scrollbar-visible::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+    /* Horizontal scrollbar cho ChatTabs */
+    .scrollbar-visible::-webkit-scrollbar:horizontal {
+      height: 10px;
+    }
+    .scrollbar-visible {
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+
+    /* Smooth scroll behavior */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Smooth transitions */
+    * {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Glass morphism effect */
+    .backdrop-blur-sm {
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .backdrop-blur-xl {
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+    }
+
+    /* Animation Keyframes for smooth transitions */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .animate-fadeIn {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+
+    @keyframes slide-in-bottom {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .animate-slide-in-bottom {
+      animation: slide-in-bottom 0.5s ease-out forwards;
+    }
+
+    /* Slide in from left (cho bot messages) */
+    @keyframes slideInLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    .animate-slideInLeft {
+      animation: slideInLeft 0.4s ease-out forwards;
+    }
+
+    /* Slide in from right (cho user messages) */
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    .animate-slideInRight {
+      animation: slideInRight 0.4s ease-out forwards;
+    }
+
+    /* Fade in and slide up */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Blink animation cho cursor */
+    @keyframes blink {
+      0%, 49% {
+        opacity: 1;
+      }
+      50%, 100% {
+        opacity: 0;
+      }
+    }
+
+    /* Pulse animation mượt hơn */
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0.8;
+        transform: scale(1.05);
+      }
+    }
+
+    /* Smooth bounce cho loading dots */
+    @keyframes bounce {
+      0%, 80%, 100% {
+        transform: translateY(0);
+      }
+      40% {
+        transform: translateY(-8px);
+      }
+    }
+
+    /* Scale up animation */
+    @keyframes scaleUp {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* Shimmer effect cho loading */
+    @keyframes shimmer {
+      0% {
+        background-position: -1000px 0;
+      }
+      100% {
+        background-position: 1000px 0;
+      }
+    }
+
+    /* File item slide in animation */
+    @keyframes fileItemSlideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+      }
+    }
+    .animate-fileItemSlideIn {
+      animation: fileItemSlideIn 0.4s ease-out forwards;
+    }
+
+    /* Upload pulse animation */
+    @keyframes uploadPulse {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4);
+      }
+      50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 8px rgba(37, 99, 235, 0);
+      }
+    }
+    .animate-uploadPulse {
+      animation: uploadPulse 2s ease-in-out infinite;
+    }
+
+    /* Drag over animation */
+    @keyframes dragOver {
+      0%, 100% {
+        border-color: rgba(37, 99, 235, 0.3);
+        background-color: rgba(37, 99, 235, 0.05);
+      }
+      50% {
+        border-color: rgba(37, 99, 235, 0.6);
+        background-color: rgba(37, 99, 235, 0.1);
+      }
+    }
+    .animate-dragOver {
+      animation: dragOver 1.5s ease-in-out infinite;
+    }
+
+    /* Shine effect */
+    @keyframes shine {
+      0% {
+        background-position: -200% center;
+      }
+      100% {
+        background-position: 200% center;
+      }
+    }
+    .animate-shine {
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+      );
+      background-size: 200% 100%;
+      animation: shine 2s linear infinite;
+    }
+
+    /* Smooth scale on hover */
+    @keyframes hoverScale {
+      from {
+        transform: scale(1);
+      }
+      to {
+        transform: scale(1.02);
+      }
+    }
+
+    /* Gradient text animation */
+    @keyframes gradientFlow {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    .animate-gradient {
+      background-size: 200% 200%;
+      animation: gradientFlow 3s ease infinite;
+    }
+
+    /* Dynamic background gradient */
+    @keyframes gradient-animation {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    /* ============================================
+       MODERN ENHANCED COLOR PALETTE - GRADIENT THEME
+       ============================================ */
+    :root {
+      /* Primary Colors - Enhanced Blue */
+      --color-primary: #1e40af; /* Blue 800 - Đậm hơn, hiện đại hơn */
+      --color-primaryHover: #1e3a8a; /* Blue 900 */
+      --color-primaryLight: #3b82f6; /* Blue 500 */
+      --color-primaryDark: #1e4d72; /* Dark teal - như trong ảnh */
+      
+      /* Accent Colors */
+      --color-accent: #06b6d4; /* Cyan 500 */
+      --color-accentLight: #22d3ee; /* Cyan 400 */
+      --color-accentGreen: #2d8659; /* Teal green - như trong ảnh */
+      
+      /* Background Colors */
+      --color-background: #f8fafc; /* Slate 50 */
+      --color-surface: #ffffff;
+      --color-surfaceHover: #f1f5f9; /* Slate 100 */
+      --color-surfaceGlass: rgba(255, 255, 255, 0.15); /* Glass effect */
+      
+      /* Text Colors - Modern Hierarchy */
+      --color-text: #0f172a; /* Slate 900 - Primary headings */
+      --color-textPrimary: #1e293b; /* Slate 800 - Main body text */
+      --color-textSecondary: #475569; /* Slate 600 - Secondary text */
+      --color-textTertiary: #94a3b8; /* Slate 400 - Hints, placeholders */
+      --color-textMuted: #cbd5e1; /* Slate 300 - Disabled text */
+      
+      /* Section Headers */
+      --color-sectionHeader: #334155; /* Slate 700 */
+      
+      /* Interactive States */
+      --color-link: #1e40af; /* Blue 800 */
+      --color-linkHover: #1e3a8a; /* Blue 900 */
+      
+      /* Borders */
+      --color-border: #e2e8f0; /* Slate 200 */
+      --color-borderGlass: rgba(255, 255, 255, 0.3); /* Glass border */
+      
+      /* Gradients */
+      --gradient-primary: linear-gradient(135deg, #1e4d72 0%, #2d8659 100%);
+      --gradient-secondary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --gradient-accent: linear-gradient(135deg, #f093fb 0%, #4facfe 100%);
+      --gradient-blue: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+      --gradient-background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%);
+    }
+
+    /* Placeholder color */
+    ::placeholder {
+      color: var(--color-textTertiary) !important;
+      opacity: 1;
+    }
+    :-ms-input-placeholder {
+      color: var(--color-textTertiary) !important;
+    }
+    ::-ms-input-placeholder {
+      color: var(--color-textTertiary) !important;
+    }
+
+        /* Base font size - 95% (reduced 5% for better UI balance) */
+        /* Inter font is optimized for screen reading at all sizes */
+        html {
+            font-size: 95%; /* 15.2px - Reduced 5% from 16px for better UI balance */
+        }
+    
+    body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background: var(--gradient-background);
+        background-size: 400% 400%;
+        animation: gradient-animation 15s ease infinite;
+        min-height: 100vh;
+    }
+    
+    /* Font weight utilities */
+    .font-light { font-weight: 300; }
+    .font-normal { font-weight: 400; }
+    .font-medium { font-weight: 500; }
+    .font-semibold { font-weight: 600; }
+    .font-bold { font-weight: 700; }
+    .font-extrabold { font-weight: 800; }
+
+    /* Code blocks use IBM Plex Mono */
+    code, pre, .hljs {
+        font-family: "IBM Plex Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    }
+    
+    /* ============================================
+       GLASSMORPHISM & MODERN EFFECTS
+       ============================================ */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    }
+    
+    .glass-input {
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+    
+    .glass-input:focus {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(30, 64, 175, 0.5);
+        box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.1), 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+    
+    .modern-card {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 16px;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    }
+    
+    /* Enhanced Shadows */
+    .shadow-soft {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    .shadow-medium {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    }
+    
+    .shadow-strong {
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
+    }
+    
+    .shadow-colored {
+        box-shadow: 0 8px 32px rgba(30, 64, 175, 0.25);
+    }
+    
+    .shadow-colored-hover:hover {
+        box-shadow: 0 12px 40px rgba(30, 64, 175, 0.35);
+    }
+    
+    /* Button Gradients */
+    .btn-gradient {
+        background: var(--gradient-primary);
+        box-shadow: 0 4px 15px 0 rgba(30, 77, 114, 0.4);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-gradient:hover {
+        background: linear-gradient(135deg, #2d8659 0%, #1e4d72 100%);
+        box-shadow: 0 6px 20px 0 rgba(30, 77, 114, 0.6);
+        transform: translateY(-2px);
+    }
+    
+    .btn-gradient-blue {
+        background: var(--gradient-blue);
+        box-shadow: 0 4px 15px 0 rgba(30, 64, 175, 0.4);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-gradient-blue:hover {
+        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        box-shadow: 0 6px 20px 0 rgba(30, 64, 175, 0.6);
+        transform: translateY(-2px);
+    }
+    
+    /* Smooth Hover Animations */
+    .hover-lift {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .hover-lift:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Pulse Glow Animation */
+    @keyframes pulse-glow {
+        0%, 100% {
+            box-shadow: 0 0 0 0 rgba(30, 64, 175, 0.4);
+        }
+        50% {
+            box-shadow: 0 0 0 8px rgba(30, 64, 175, 0);
+        }
+    }
+    
+    .pulse-glow {
+        animation: pulse-glow 2s ease-in-out infinite;
+    }
+  </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="text-slate-800">
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

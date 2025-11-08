@@ -1,0 +1,181 @@
+# ============================================
+# Environment Variables
+# ============================================
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# ============================================
+# Python
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Python Virtual Environments
+venv/
+ENV/
+env/
+.venv
+venv.bak/
+env.bak/
+
+# Python Testing & Coverage
+.pytest_cache/
+.coverage
+coverage/
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+
+# Python Type Checkers
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# ============================================
+# Node.js / Frontend
+# ============================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Frontend Build Output
+UI/dist/
+UI/build/
+UI/.vite/
+UI/.env.local
+UI/.env.production.local
+UI/.env.development.local
+
+# Frontend Auto-generated Files
+UI/current_packages.txt
+UI/metadata.json
+
+# ============================================
+# IDE & Editors
+# ============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+*.code-workspace
+
+# ============================================
+# Logs
+# ============================================
+logs/
+*.log
+*.log.*
+
+# ============================================
+# Data & Indexes (User Uploaded Files & Vector DB)
+# ============================================
+data/
+faiss_index/
+*.pdf
+*.docx
+*.doc
+*.txt
+
+# ============================================
+# OS Files
+# ============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ============================================
+# Docker
+# ============================================
+# Keep .dockerignore (it's a config file)
+!.dockerignore
+
+# ============================================
+# Database Files
+# ============================================
+*.db
+*.sqlite
+*.sqlite3
+
+# ============================================
+# Temporary & Cache Files
+# ============================================
+*.tmp
+*.temp
+*.bak
+*.cache
+
+# ============================================
+# Test & Development Files
+# ============================================
+a.py
+
+# ============================================
+# Jupyter Notebook
+# ============================================
+.ipynb_checkpoints
+
+# ============================================
+# pyenv
+# ============================================
+.python-version
+
+# ============================================
+# Celery
+# ============================================
+celerybeat-schedule
+celerybeat.pid
+
+# ============================================
+# Other Tools
+# ============================================
+# SageMath
+*.sage.py
+
+# Spyder
+.spyderproject
+.spyproject
+
+# Rope
+.ropeproject
+
+# mkdocs
+/site
