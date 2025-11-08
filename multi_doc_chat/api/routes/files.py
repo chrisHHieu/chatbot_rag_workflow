@@ -231,7 +231,11 @@ async def ingest(
 
 
 @router.delete("/sessions/{session_id}/files/{file_name}")
-async def delete_file_from_session(session_id: str, file_name: str):
+async def delete_file_from_session(
+    session_id: str, 
+    file_name: str,
+    model_loader: ModelLoader = Depends(get_model_loader)  # ✅ Add dependency injection
+):
     """Delete a specific file from session's FAISS index.
     
     This will:

@@ -6,6 +6,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # Empty string = relative URL (same origin) - KHÔNG cần điền URL server
+        # Frontend và backend cùng domain → browser tự động dùng current origin
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
     container_name: llmops_rag_backend
     environment:
       # API Keys

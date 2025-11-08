@@ -1,4 +1,26 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8100';
+// ✅ Smart API URL detection: relative URL for same-origin, absolute for different origins
+const getApiBaseUrl = (): string => {
+  // Priority 1: Explicit environment variable (kể cả empty string)
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  
+  // Nếu có giá trị (kể cả empty string ''), dùng nó
+  // Empty string = relative URL = tự động dùng cùng domain với frontend
+  if (envUrl !== undefined) {
+    return envUrl; // Empty string '' = relative URL (best for production)
+  }
+  
+  // Priority 2: Development fallback (chỉ khi không có env variable)
+  // Kiểm tra nếu đang chạy trên localhost
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return 'http://localhost:8100';
+  }
+  
+  // Priority 3: Production - dùng relative URL (same origin)
+  // Browser sẽ tự động dùng window.location.origin
+  return '';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 export interface UploadResponse {
   session_id: string;
