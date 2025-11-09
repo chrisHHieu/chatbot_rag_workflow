@@ -2,6 +2,7 @@ import React from 'react';
 import { UploadedFile } from '../types';
 import { UploadIcon, PdfIcon, FileTextIcon, OOSBrandIcon, DocumentSearchIcon, CloseIcon } from './icons';
 import { DocxViewer } from './DocxViewer';
+import { ConfirmModal } from './ConfirmModal';
 
 interface SidebarProps {
   uploadedFiles: UploadedFile[];
@@ -34,6 +35,7 @@ const FileItemLoader: React.FC<{ progressText?: string }> = ({ progressText }) =
 export const Sidebar = React.memo<SidebarProps>(({ uploadedFiles, selectedFile, onFileSelect, onUploadClick, onRemoveFile, onFilesDropped, sessionId, onDeleteAllFiles }) => {
   const [isDragOver, setIsDragOver] = React.useState(false);
   const [dragCounter, setDragCounter] = React.useState(0);
+  const [showDeleteAllModal, setShowDeleteAllModal] = React.useState(false);
 
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
@@ -227,9 +229,7 @@ export const Sidebar = React.memo<SidebarProps>(({ uploadedFiles, selectedFile, 
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (window.confirm('Bạn có chắc chắn muốn xóa tất cả tài liệu? Hành động này không thể hoàn tác.')) {
-                      onDeleteAllFiles();
-                    }
+                    setShowDeleteAllModal(true);
                   }}
                   className="text-xs px-3 py-1.5 rounded-lg transition-all duration-200 hover:scale-105 active:scale-95"
                   style={{
@@ -480,6 +480,22 @@ export const Sidebar = React.memo<SidebarProps>(({ uploadedFiles, selectedFile, 
               )}
             </div>
         </div>
+
+        {/* Delete All Confirmation Modal */}
+        <ConfirmModal
+          isOpen={showDeleteAllModal}
+          onClose={() => setShowDeleteAllModal(false)}
+          onConfirm={() => {
+            if (onDeleteAllFiles) {
+              onDeleteAllFiles();
+            }
+          }}
+          title="Xóa tất cả tài liệu?"
+          message="Bạn có chắc chắn muốn xóa tất cả tài liệu? Hành động này không thể hoàn tác."
+          confirmText="Xóa tất cả"
+          cancelText="Hủy"
+          confirmButtonStyle="danger"
+        />
     </div>
   );
 }, (prevProps, nextProps) => {
