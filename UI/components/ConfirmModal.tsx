@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { CloseIcon } from './icons';
 
 interface ConfirmModalProps {
@@ -6,7 +7,7 @@ interface ConfirmModalProps {
   onClose: () => void;
   onConfirm: () => void;
   title: string;
-  message: string;
+  message: string | React.ReactNode;
   confirmText?: string;
   cancelText?: string;
   confirmButtonStyle?: 'danger' | 'primary';
@@ -53,14 +54,19 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     };
   }, [isOpen, onClose]);
 
-  return (
+  const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-fadeIn"
       onClick={handleBackdropClick}
       style={{
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)'
+        WebkitBackdropFilter: 'blur(8px)',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0
       }}
     >
       {/* Modal Container - Modern Glass Card */}
@@ -137,16 +143,22 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
         {/* Message */}
         <div className="px-6 pb-6">
-          <p
-            className="text-sm text-center leading-relaxed"
-            style={{
-              color: 'var(--color-textSecondary)',
-              fontWeight: '400',
-              lineHeight: '1.6'
-            }}
-          >
-            {message}
-          </p>
+          {typeof message === 'string' ? (
+            <p
+              className="text-sm text-center leading-relaxed"
+              style={{
+                color: 'var(--color-textSecondary)',
+                fontWeight: '400',
+                lineHeight: '1.6'
+              }}
+            >
+              {message}
+            </p>
+          ) : (
+            <div style={{ color: 'var(--color-textSecondary)' }}>
+              {message}
+            </div>
+          )}
         </div>
 
         {/* Divider */}
@@ -215,5 +227,11 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       </div>
     </div>
   );
+
+  // Use React Portal to render modal at document body level for proper centering
+  // This ensures modal is always centered regardless of parent container positioning
+  return typeof document !== 'undefined' 
+    ? createPortal(modalContent, document.body)
+    : null;
 };
 

@@ -49,7 +49,7 @@ class GraphBuilder:
                 token_counter=count_tokens_approximately,
                 model=summarization_model,
                 max_tokens=summarization_config.get("max_tokens_total", 75000),  # ✅ 90% of 1M context window
-                max_tokens_before_summary=summarization_config.get("max_tokens_before_summary", 250000),  # ✅ Trigger at 70%
+                max_tokens_before_summary=summarization_config.get("max_tokens_before_summary", 200000),  # ✅ Trigger at 70%
                 max_summary_tokens=summarization_config.get("max_summary_tokens", 15000),  # ✅ Detailed summaries
             )
             

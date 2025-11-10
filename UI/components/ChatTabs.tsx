@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from 'react';
+import { ConfirmModal } from './ConfirmModal';
 
 export interface ChatSession {
   id: string;
@@ -23,6 +24,8 @@ export const ChatTabs: React.FC<ChatTabsProps> = ({
   onCloseSession,
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [showDeleteModal, setShowDeleteModal] = React.useState(false);
+  const [sessionToDelete, setSessionToDelete] = React.useState<ChatSession | null>(null);
 
   // ✅ Enable mouse wheel horizontal scrolling
   useEffect(() => {
@@ -116,7 +119,11 @@ export const ChatTabs: React.FC<ChatTabsProps> = ({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onCloseSession(session.id);
+                    // Show confirmation modal instead of deleting directly
+                    console.log('[ChatTabs] Close button clicked, session:', session);
+                    setSessionToDelete(session);
+                    setShowDeleteModal(true);
+                    console.log('[ChatTabs] Modal state set:', { showDeleteModal: true, sessionToDelete: session });
                   }}
                   className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
                     isActive
@@ -124,7 +131,7 @@ export const ChatTabs: React.FC<ChatTabsProps> = ({
                       : 'opacity-60 group-hover:opacity-100 hover:bg-slate-300 text-slate-600'
                   }`}
                   style={{ fontSize: '18px', lineHeight: '1' }}
-                  title="Close session"
+                  title="Đóng session"
                 >
                   ×
                 </button>
@@ -134,6 +141,29 @@ export const ChatTabs: React.FC<ChatTabsProps> = ({
           })}
         </div>
       </div>
+
+      {/* Delete Session Confirmation Modal */}
+      {sessionToDelete && (
+        <ConfirmModal
+          isOpen={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setSessionToDelete(null);
+          }}
+          onConfirm={() => {
+            if (onCloseSession && sessionToDelete) {
+              onCloseSession(sessionToDelete.id);
+            }
+            setShowDeleteModal(false);
+            setSessionToDelete(null);
+          }}
+          title="Xóa session này?"
+          message="Bạn có chắc chắn muốn xóa session này? Hành động này sẽ xóa toàn bộ tài liệu, lịch sử chat và không thể hoàn tác."
+          confirmText="Xóa session"
+          cancelText="Hủy"
+          confirmButtonStyle="danger"
+        />
+      )}
     </div>
   );
 };

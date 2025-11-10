@@ -20,6 +20,7 @@ class FastAPIFileAdapter:
     def __init__(self, uf: UploadFile):
         self._uf = uf
         self.filename = uf.filename or "file"
+    
     def read(self):
         self._uf.file.seek(0)
         return self._uf.file.read()

@@ -39,7 +39,7 @@ summarization:
   max_tokens: 15000                    # Max tokens for summary generation (increased for detailed summaries)
   temperature: 0.1                    # Low temperature for accurate, consistent summaries
   max_tokens_total: 75000           # 90% of 1M context window (leaves 100K buffer for system prompts, tools, overhead)
-  max_tokens_before_summary: 250000   # Trigger summarization at 70% (700K tokens) - maximizes memory retention
+  max_tokens_before_summary: 200000   # Trigger summarization at 70% (700K tokens) - maximizes memory retention
   max_summary_tokens: 15000                     # Detailed summary to preserve more information including citations
 
 # Message Trimming Configuration
