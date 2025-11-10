@@ -41,16 +41,16 @@ class GraphBuilder:
             
             grader_model = self.model_loader.load_grader_model()
             summarization_model = grader_model.bind(
-                max_tokens=summarization_config.get("max_tokens", 8000),  # ✅ Optimized for 1M context window
+                max_tokens=summarization_config.get("max_tokens", 15000),  # ✅ Optimized for 1M context window
                 temperature=summarization_config.get("temperature", 0.1)
             )
             
             summarization_node = SummarizationNode(
                 token_counter=count_tokens_approximately,
                 model=summarization_model,
-                max_tokens=summarization_config.get("max_tokens_total", 150000),  # ✅ 90% of 1M context window
-                max_tokens_before_summary=summarization_config.get("max_tokens_before_summary", 100000),  # ✅ Trigger at 70%
-                max_summary_tokens=summarization_config.get("max_summary_tokens", 8000),  # ✅ Detailed summaries
+                max_tokens=summarization_config.get("max_tokens_total", 75000),  # ✅ 90% of 1M context window
+                max_tokens_before_summary=summarization_config.get("max_tokens_before_summary", 250000),  # ✅ Trigger at 70%
+                max_summary_tokens=summarization_config.get("max_summary_tokens", 15000),  # ✅ Detailed summaries
             )
             
             log.info("Summarization node created")

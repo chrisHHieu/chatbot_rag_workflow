@@ -2,7 +2,7 @@ from typing import List
 from pathlib import Path
 import shutil
 
-from fastapi import APIRouter, UploadFile, File, HTTPException, Query, Depends, Request
+from fastapi import APIRouter, UploadFile, File, HTTPException, Query, Depends
 from multi_doc_chat.api.schemas import UploadResponse, IngestResponse
 
 from multi_doc_chat.src.document_ingestion.data_ingestion import ChatIngestor, FaissManager
@@ -140,7 +140,7 @@ async def upload(
 ):
     if not files:
         raise HTTPException(status_code=400, detail="No files uploaded")
-    
+
     # ✅ Validate file size limits
     validate_file_limits(files)
 
@@ -191,7 +191,7 @@ async def ingest(
         raise HTTPException(status_code=400, detail="session_id is required")
     if not files:
         raise HTTPException(status_code=400, detail="No files uploaded")
-    
+
     # ✅ Validate file size limits (including session limits)
     validate_file_limits(files, session_id=session_id)
 

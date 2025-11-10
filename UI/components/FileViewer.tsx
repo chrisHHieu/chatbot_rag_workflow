@@ -368,9 +368,9 @@ export const Sidebar = React.memo<SidebarProps>(({ uploadedFiles, selectedFile, 
                         }}>Kéo thả file hoặc nhấn nút upload để bắt đầu</p>
                     </div>
                 )}
-          </div>
+            </div>
         </div>
-        
+
         {/* Visual Divider - Clear separation between sections */}
         <div className="flex-shrink-0 my-3">
           <div style={{
