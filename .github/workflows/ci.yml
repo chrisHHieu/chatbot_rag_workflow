@@ -25,8 +25,8 @@ jobs:
 
       - name: Sync dependencies with uv (locked)
         run: |
-          uv pip install -r requirements.txt
-          uv pip install pytest
+          uv pip install --system -r requirements.txt
+          uv pip install --system pytest
 
       - name: Run tests
         env:
