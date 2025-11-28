@@ -24,13 +24,15 @@ jobs:
         uses: astral-sh/setup-uv@v4
 
       - name: Sync dependencies with uv (locked)
+        working-directory: llmops_rag
         run: |
           uv pip install -r requirements.txt
           uv pip install pytest
 
       - name: Run tests
+        working-directory: llmops_rag
         env:
-          PYTHONPATH: ${{ github.workspace }}
+          PYTHONPATH: ${{ github.workspace }}/llmops_rag
           OPENAI_API_KEY: dummy
         run: uv run pytest -q
 
