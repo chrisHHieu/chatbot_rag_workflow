@@ -24,6 +24,9 @@ def test_new_and_resume_with_monkeypatch(monkeypatch, tmp_path: Path):
     # Monkeypatch ModelLoader used internally to return DummyEmbeddings
     import multi_doc_chat.src.document_ingestion.data_ingestion as di
     class DummyModelLoader:
+        def __init__(self, config=None):
+            # Accept config argument but ignore it
+            pass
         def load_embeddings(self):
             return DummyEmbeddings()
     monkeypatch.setattr(di, "ModelLoader", DummyModelLoader)

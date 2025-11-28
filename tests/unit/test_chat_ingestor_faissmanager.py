@@ -16,6 +16,9 @@ def test_faiss_manager_load_create_and_add(monkeypatch, tmp_path: Path):
     import multi_doc_chat.src.document_ingestion.data_ingestion as di
 
     class DummyModelLoader:
+        def __init__(self, config=None):
+            # Accept config argument but ignore it
+            pass
         def load_embeddings(self):
             return DummyEmbeddings()
 
@@ -40,6 +43,9 @@ def test_chat_ingestor_build_retriever(monkeypatch, tmp_path: Path):
     import multi_doc_chat.src.document_ingestion.data_ingestion as di
 
     class DummyModelLoader:
+        def __init__(self, config=None):
+            # Accept config argument but ignore it
+            pass
         def load_embeddings(self):
             return DummyEmbeddings()
 
