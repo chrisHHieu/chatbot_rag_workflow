@@ -4,6 +4,10 @@ from typing import List
 
 import pytest
 from langchain_core.embeddings import Embeddings
+from langchain_core.messages import AIMessage
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.callbacks import CallbackManagerForLLMRun
+from langchain_core.outputs import ChatGeneration, ChatResult
 
 from multi_doc_chat.src.session_runner import run_chat_with_new_upload, run_chat_resume_session
 
@@ -15,21 +19,47 @@ class DummyEmbeddings(Embeddings):
         return [float(len(text))]
 
 
+class DummyLLM(BaseChatModel):
+    """Dummy LLM for testing that returns a simple response."""
+    
+    def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+        # Return a simple response message
+        response = AIMessage(content="This is a dummy response for testing.")
+        generation = ChatGeneration(message=response)
+        return ChatResult(generations=[generation])
+    
+    @property
+    def _llm_type(self):
+        return "dummy"
+
+
 @pytest.mark.skip(reason="Requires OpenAI and Postgres unless monkeypatched. Enable when env is set.")
 def test_end_to_end_requires_env():
     assert True
 
 
 def test_new_and_resume_with_monkeypatch(monkeypatch, tmp_path: Path):
-    # Monkeypatch ModelLoader used internally to return DummyEmbeddings
+    # Monkeypatch ModelLoader used internally to return DummyEmbeddings and DummyLLM
     import multi_doc_chat.src.document_ingestion.data_ingestion as di
+    import multi_doc_chat.utils.model_loader as ml_mod
+    import multi_doc_chat.src.document_chat.graph_builder as gb_mod
+    import multi_doc_chat.src.document_chat.graph_nodes as gn_mod
+    
     class DummyModelLoader:
         def __init__(self, config=None):
             # Accept config argument but ignore it
             pass
         def load_embeddings(self):
             return DummyEmbeddings()
+        def load_response_model(self):
+            return DummyLLM()
+        def load_grader_model(self):
+            return DummyLLM()
+    
     monkeypatch.setattr(di, "ModelLoader", DummyModelLoader)
+    monkeypatch.setattr(ml_mod, "ModelLoader", DummyModelLoader)
+    monkeypatch.setattr(gb_mod, "ModelLoader", DummyModelLoader)
+    monkeypatch.setattr(gn_mod, "ModelLoader", DummyModelLoader)
 
     # Monkeypatch CheckpointerManager to bypass Postgres (use a no-op async context manager)
     import types
