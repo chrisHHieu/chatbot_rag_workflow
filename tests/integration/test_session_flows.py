@@ -28,6 +28,10 @@ class DummyLLM(BaseChatModel):
         generation = ChatGeneration(message=response)
         return ChatResult(generations=[generation])
     
+    def bind_tools(self, tools, **kwargs):
+        """Bind tools to the model - just return self for testing."""
+        return self
+    
     @property
     def _llm_type(self):
         return "dummy"
