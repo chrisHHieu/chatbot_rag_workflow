@@ -355,8 +355,8 @@ class ChatIngestor:
     def _split(self, docs: List[Document], *, chunk_size: Optional[int] = None, chunk_overlap: Optional[int] = None, add_start_index: Optional[bool] = None) -> List[Document]:
         # Load from config if not provided
         splitter_config = self.config.get("text_splitter", {})
-        chunk_size = chunk_size or splitter_config.get("chunk_size", 1000)  # ✅ Updated to match config.yaml
-        chunk_overlap = chunk_overlap or splitter_config.get("chunk_overlap", 150)
+        chunk_size = chunk_size if chunk_size is not None else splitter_config.get("chunk_size", 1000)  # ✅ Updated to match config.yaml
+        chunk_overlap = chunk_overlap if chunk_overlap is not None else splitter_config.get("chunk_overlap", 150)
         add_start_index = add_start_index if add_start_index is not None else splitter_config.get("add_start_index", True)
         use_tiktoken = splitter_config.get("use_tiktoken", True)  # Default True for production
         
