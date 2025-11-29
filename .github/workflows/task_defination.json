@@ -1,0 +1,54 @@
+{
+    "family": "llmopstdlive",
+    "networkMode": "awsvpc",
+    "executionRoleArn": "arn:aws:iam::592992781625:role/ecsTaskExecutionRole",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "1024",
+    "memory": "8192",
+    "containerDefinitions": [
+      {
+        "name": "llmops-live-container",
+        "image": "592992781625.dkr.ecr.us-east-1.amazonaws.com/llmopsrepolive",
+        "cpu": 1024,
+        "essential": true,
+        "portMappings": [
+          {
+            "containerPort": 8000,
+            "hostPort": 8000,
+            "protocol": "tcp",
+            "name": "llmops-live-container-8000-tcp",
+            "appProtocol": "http"
+          }
+        ],
+        "environment": [
+          {
+            "name": "ENV",
+            "value": "production"
+          }
+        ],
+        "secrets": [
+          {
+            "name": "OPENAI_API_KEY",
+            "valueFrom": "arn:aws:secretsmanager:us-east-1:592992781625:secret:OPENAI_API_KEY-xgF1Db"
+          }
+        ],
+        "healthCheck": {
+          "command": ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"],
+          "interval": 30,
+          "timeout": 5,
+          "retries": 3,
+          "startPeriod": 40
+        },
+        "logConfiguration": {
+          "logDriver": "awslogs",
+          "options": {
+            "awslogs-group": "/ecs/llmopstdlive",
+            "awslogs-region": "us-east-1",
+            "awslogs-stream-prefix": "ecs",
+            "awslogs-create-group": "true"
+          }
+        }
+      }
+    ]
+  }
+  
