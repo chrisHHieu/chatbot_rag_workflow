@@ -19,8 +19,8 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   onConfirm,
   title,
   message,
-  confirmText = 'Xác nhận',
-  cancelText = 'Hủy',
+  confirmText = 'Confirm',
+  cancelText = 'Cancel',
   confirmButtonStyle = 'danger'
 }) => {
   if (!isOpen) return null;
@@ -100,7 +100,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
             e.currentTarget.style.color = 'var(--color-textSecondary)';
           }}
-          title="Đóng (ESC)"
+          title="Close (ESC)"
         >
           <CloseIcon />
         </button>

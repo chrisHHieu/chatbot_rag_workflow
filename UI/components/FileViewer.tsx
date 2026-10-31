@@ -1,6 +1,6 @@
 import React from 'react';
 import { UploadedFile } from '../types';
-import { UploadIcon, PdfIcon, FileTextIcon, OOSBrandIcon, DocumentSearchIcon, CloseIcon } from './icons';
+import { UploadIcon, PdfIcon, FileTextIcon, BrandIcon, DocumentSearchIcon, CloseIcon } from './icons';
 import { DocxViewer } from './DocxViewer';
 import { ConfirmModal } from './ConfirmModal';
 
@@ -91,7 +91,7 @@ export const Sidebar = React.memo<SidebarProps>(({ uploadedFiles, selectedFile, 
             <div className="flex items-center gap-3">
             {/* Logo với kích thước cố định, không bị méo - tỷ lệ 1.91:1 */}
             <div className="flex-shrink-0" style={{ width: '76px', height: '40px' }}>
-              <OOSBrandIcon style={{ width: '100%', height: '100%' }} />
+              <BrandIcon style={{ width: '100%', height: '100%' }} />
               </div>
             
             {/* Text content với vertical alignment tốt hơn */}
@@ -103,7 +103,7 @@ export const Sidebar = React.memo<SidebarProps>(({ uploadedFiles, selectedFile, 
                   letterSpacing: '-0.01em'
                 }}
               >
-                Trợ lý AI Dữ liệu Doanh nghiệp từ OOS Software
+                Document intelligence assistant
               </h1>
               <p 
                 className="text-xs leading-tight mt-0.5" 
@@ -112,7 +112,7 @@ export const Sidebar = React.memo<SidebarProps>(({ uploadedFiles, selectedFile, 
                   fontWeight: '400'
                 }}
               >
-                Quản lý và truy cập tài liệu doanh nghiệp của bạn tại đây
+                Upload and inspect the documents this session answers from
               </p>
             </div>
           </div>
@@ -195,11 +195,11 @@ export const Sidebar = React.memo<SidebarProps>(({ uploadedFiles, selectedFile, 
                 color: 'var(--color-primary)',
                 fontWeight: '700',
                 letterSpacing: '-0.01em'
-              }}>Thả tài liệu vào đây</h3>
+              }}>Drop documents here</h3>
               <p className="text-sm" style={{ 
                 color: 'var(--color-textSecondary)',
                 fontWeight: '400'
-              }}>Kéo và thả file để tải lên</p>
+              }}>Drag and drop files to upload</p>
             </div>
           </div>
         )}
@@ -218,7 +218,7 @@ export const Sidebar = React.memo<SidebarProps>(({ uploadedFiles, selectedFile, 
                 fontWeight: '600',
                 letterSpacing: '-0.01em'
               }}>
-                <span>📁 Danh sách tài liệu đã tải lên</span>
+                <span>📁 Uploaded documents</span>
                 {uploadedFiles.length > 0 && (
                   <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-600 font-medium animate-scaleUp">
                     {uploadedFiles.length}
@@ -246,7 +246,7 @@ export const Sidebar = React.memo<SidebarProps>(({ uploadedFiles, selectedFile, 
                     e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
                     e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)';
                   }}
-                  title="Xóa tất cả tài liệu (giữ lại session)"
+                  title="Remove all documents (keep the session)"
                 >
                   Xóa tất cả
                 </button>
@@ -324,11 +324,11 @@ export const Sidebar = React.memo<SidebarProps>(({ uploadedFiles, selectedFile, 
                             </div>
                              <div className="flex-shrink-0">
                                 {upFile.status === 'uploading' ? (
-                                    <FileItemLoader progressText="Đang xử lý..." />
+                                    <FileItemLoader progressText="Processing..." />
                                 ) : upFile.status === 'deleting' ? (
-                                    <FileItemLoader progressText="Đang xóa..." />
+                                    <FileItemLoader progressText="Removing..." />
                                 ) : upFile.status === 'error' ? (
-                                    <span className="text-xs text-red-500">Lỗi</span>
+                                    <span className="text-xs text-red-500">Error</span>
                                 ) : (
                                     <button
                                         onClick={(e) => {
@@ -361,11 +361,11 @@ export const Sidebar = React.memo<SidebarProps>(({ uploadedFiles, selectedFile, 
                         <p className="text-sm mb-2 font-semibold" style={{ 
                           color: 'var(--color-textPrimary)',
                           fontWeight: '600'
-                        }}>Chưa có tài liệu</p>
+                        }}>No documents yet</p>
                         <p className="text-xs" style={{ 
                           color: 'var(--color-textTertiary)',
                           fontWeight: '400'
-                        }}>Kéo thả file hoặc nhấn nút upload để bắt đầu</p>
+                        }}>Drop files or use the upload button to begin</p>
                     </div>
                 )}
             </div>
@@ -393,10 +393,10 @@ export const Sidebar = React.memo<SidebarProps>(({ uploadedFiles, selectedFile, 
               fontWeight: '600',
               letterSpacing: '-0.01em'
             }}>
-              <span>👁️ Bản xem trước tài liệu</span>
+              <span>👁️ Document preview</span>
               {selectedFile && (
                 <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-600 font-medium animate-scaleUp ml-auto">
-                  ✓ Đã chọn
+                  ✓ Selected
                 </span>
               )}
             </h2>
@@ -415,11 +415,11 @@ export const Sidebar = React.memo<SidebarProps>(({ uploadedFiles, selectedFile, 
                               <h3 className="font-semibold mb-2" style={{ 
                                 color: 'var(--color-textPrimary)',
                                 fontWeight: '600'
-                              }}>Đang xử lý tài liệu...</h3>
+                              }}>Processing document...</h3>
                               <p className="text-sm" style={{ 
                                 color: 'var(--color-textSecondary)',
                                 fontWeight: '400'
-                              }}>Vui lòng đợi trong giây lát</p>
+                              }}>This only takes a moment</p>
                           </div>
                       ) : selectedFile.status === 'deleting' ? (
                           <div className="w-full h-full flex flex-col items-center justify-center text-center p-8">
@@ -432,11 +432,11 @@ export const Sidebar = React.memo<SidebarProps>(({ uploadedFiles, selectedFile, 
                               <h3 className="font-semibold mb-2" style={{ 
                                 color: 'var(--color-textPrimary)',
                                 fontWeight: '600'
-                              }}>Đang xóa tài liệu...</h3>
+                              }}>Removing document...</h3>
                               <p className="text-sm" style={{ 
                                 color: 'var(--color-textSecondary)',
                                 fontWeight: '400'
-                              }}>Vui lòng đợi trong giây lát</p>
+                              }}>This only takes a moment</p>
                           </div>
                       ) : selectedFile.status === 'error' ? (
                           <div className="w-full h-full flex flex-col items-center justify-center text-center p-8">
@@ -446,11 +446,11 @@ export const Sidebar = React.memo<SidebarProps>(({ uploadedFiles, selectedFile, 
                               <h3 className="font-semibold mb-2" style={{ 
                                 color: '#dc2626',
                                 fontWeight: '600'
-                              }}>Lỗi khi xử lý</h3>
+                              }}>Processing failed</h3>
                               <p className="text-sm" style={{ 
                                 color: '#ef4444',
                                 fontWeight: '400'
-                              }}>Không thể tải tài liệu này</p>
+                              }}>This document could not be loaded</p>
                           </div>
                       ) : selectedFile.file.type === 'application/pdf' && selectedFile.url ? (
                           <iframe src={selectedFile.url} className="w-full h-full border-none min-h-[400px]" title={selectedFile.file.name} />
@@ -470,12 +470,12 @@ export const Sidebar = React.memo<SidebarProps>(({ uploadedFiles, selectedFile, 
                       <h3 className="font-semibold mb-2" style={{ 
                         color: 'var(--color-textPrimary)',
                         fontWeight: '600'
-                      }}>Hãy chọn một tài liệu</h3>
+                      }}>Select a document</h3>
                       <p className="text-sm max-w-xs" style={{ 
                         color: 'var(--color-textSecondary)',
                         fontWeight: '400',
                         lineHeight: '1.5'
-                      }}>Nội dung của tài liệu sẽ được hiển thị tại đây để bạn xem và đánh giá.</p>
+                      }}>Its content appears here so you can check what the model is reading.</p>
                   </div>
               )}
             </div>
@@ -490,10 +490,10 @@ export const Sidebar = React.memo<SidebarProps>(({ uploadedFiles, selectedFile, 
               onDeleteAllFiles();
             }
           }}
-          title="Xóa tất cả tài liệu?"
-          message="Bạn có chắc chắn muốn xóa tất cả tài liệu? Hành động này không thể hoàn tác."
-          confirmText="Xóa tất cả"
-          cancelText="Hủy"
+          title="Remove all documents?"
+          message="Every document in this session is removed and cannot be restored."
+          confirmText="Remove all"
+          cancelText="Cancel"
           confirmButtonStyle="danger"
         />
     </div>

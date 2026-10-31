@@ -1,6 +1,6 @@
 import React from 'react';
 import { Message } from '../types';
-import { OOSBrandIcon, UserIcon } from './icons';
+import { BrandIcon, UserIcon } from './icons';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface ChatMessageProps {
@@ -29,7 +29,7 @@ export const ChatMessage = React.memo<ChatMessageProps>(({ message }) => {
         }}
       >
         {isModel ? (
-          <OOSBrandIcon style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <BrandIcon style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
           <UserIcon className="w-6 h-6 text-white" />
         )}
@@ -65,7 +65,7 @@ export const ChatMessage = React.memo<ChatMessageProps>(({ message }) => {
             color: isModel ? 'var(--color-textSecondary)' : 'rgba(255, 255, 255, 0.8)'
           }}
         >
-          {new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+          {new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
         </div>
       </div>
     </div>

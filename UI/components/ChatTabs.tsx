@@ -131,7 +131,7 @@ export const ChatTabs: React.FC<ChatTabsProps> = ({
                       : 'opacity-60 group-hover:opacity-100 hover:bg-slate-300 text-slate-600'
                   }`}
                   style={{ fontSize: '18px', lineHeight: '1' }}
-                  title="Đóng session"
+                  title="Close session"
                 >
                   ×
                 </button>
@@ -157,10 +157,10 @@ export const ChatTabs: React.FC<ChatTabsProps> = ({
             setShowDeleteModal(false);
             setSessionToDelete(null);
           }}
-          title="Xóa session này?"
-          message="Bạn có chắc chắn muốn xóa session này? Hành động này sẽ xóa toàn bộ tài liệu, lịch sử chat và không thể hoàn tác."
-          confirmText="Xóa session"
-          cancelText="Hủy"
+          title="Delete this session?"
+          message="Deleting the session removes its documents and chat history. This cannot be undone."
+          confirmText="Delete session"
+          cancelText="Cancel"
           confirmButtonStyle="danger"
         />
       )}

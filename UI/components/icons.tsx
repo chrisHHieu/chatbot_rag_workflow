@@ -37,16 +37,16 @@ export const PdfIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 );
 
 // ============================================
-// LOGO - Sử dụng file logo.svg từ public folder
+// Logo, served from the public folder
 // ============================================
-export const OOSBrandIcon: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = (props) => {
+export const BrandIcon: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = (props) => {
   const { className, style, ...rest } = props;
   // Use logo.svg from public folder
   // For avatar circles, use 'cover' to fill the circle; for other uses, can override with 'contain'
   return (
     <img 
       src="/logo.svg" 
-      alt="Humax Logo" 
+      alt="Knowledge chat logo" 
       className={className}
       style={{ 
         ...style, 

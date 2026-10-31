@@ -6,7 +6,7 @@ import { Sidebar } from './components/FileViewer';
 import { ChatMessage } from './components/ChatMessage';
 import { MarkdownRenderer } from './components/MarkdownRenderer';
 import { ChatTabs, ChatSession } from './components/ChatTabs';
-import { SendIcon, OOSBrandIcon, DocumentSearchIcon, BuildingIcon } from './components/icons';
+import { SendIcon, BrandIcon, DocumentSearchIcon, BuildingIcon } from './components/icons';
 
 const SESSION_STORAGE_KEY = 'llmops_rag_session_id';
 const SESSIONS_STORAGE_KEY = 'llmops_rag_sessions';
@@ -19,7 +19,7 @@ const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const MAX_SESSION_SIZE_BYTES = MAX_SESSION_SIZE_MB * 1024 * 1024;
 
 // ============================================
-// 1. TÁCH CHATINPUT THÀNH COMPONENT RIÊNG
+// 1. Chat input lives in its own component
 // ============================================
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
@@ -37,7 +37,7 @@ const ChatInput = React.memo<ChatInputProps>(({ onSendMessage, isLoading, sessio
   const handleSend = useCallback(() => {
     if (userInput.trim()) {
       onSendMessage(userInput);
-      setUserInput(''); // Clear sau khi gửi
+      setUserInput(''); // Clear once sent
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
       }
@@ -59,7 +59,7 @@ const ChatInput = React.memo<ChatInputProps>(({ onSendMessage, isLoading, sessio
     }
   }, [userInput]);
 
-  // ✅ Disable khi không có sessionId hoặc không có files
+  // Disabled with no session or no files
   const isDisabled = !sessionId || !hasFiles;
 
   return (
@@ -90,7 +90,7 @@ const ChatInput = React.memo<ChatInputProps>(({ onSendMessage, isLoading, sessio
               onKeyDown={handleKeyDown}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              placeholder={isDisabled ? "Vui lòng tải tài liệu lên để bắt đầu trò chuyện" : "Đặt câu hỏi về tài liệu của bạn..."}
+              placeholder={isDisabled ? "Upload a document to start chatting" : "Ask a question about your documents..."}
               className="w-full bg-transparent border-none rounded-[1.75rem] py-4 pl-6 pr-24 resize-none focus:outline-none transition-all duration-200 text-base leading-relaxed"
               style={{
                 color: 'var(--color-textPrimary)',
@@ -103,7 +103,7 @@ const ChatInput = React.memo<ChatInputProps>(({ onSendMessage, isLoading, sessio
               disabled={isLoading || isDisabled}
             />
             
-            {/* Character counter (hiển thị khi có text) */}
+            {/* Character counter, shown while typing */}
             {userInput.length > 0 && (
               <div className="absolute bottom-2 left-6 text-xs transition-opacity" style={{ 
                 color: userInput.length > maxChars * 0.8 ? '#f59e0b' : 'var(--color-textTertiary)',
@@ -113,7 +113,7 @@ const ChatInput = React.memo<ChatInputProps>(({ onSendMessage, isLoading, sessio
               </div>
             )}
             
-            {/* Send button với animation đẹp */}
+            {/* Send button */}
             <button
               onClick={handleSend}
               disabled={isLoading || !userInput.trim() || isDisabled}
@@ -139,13 +139,13 @@ const ChatInput = React.memo<ChatInputProps>(({ onSendMessage, isLoading, sessio
                 color: 'var(--color-textSecondary)',
                 fontWeight: '500'
               }}>Enter</kbd>
-              <span>để gửi</span>
+              <span>to send</span>
               <span className="mx-1">•</span>
               <kbd className="px-2 py-0.5 bg-slate-100 rounded border border-slate-300 font-mono text-[10px]" style={{ 
                 color: 'var(--color-textSecondary)',
                 fontWeight: '500'
               }}>Shift + Enter</kbd>
-              <span>để xuống dòng</span>
+              <span>for a new line</span>
             </span>
             {sessionId && (
               <span className="flex items-center gap-1" style={{ fontWeight: '400' }}>
@@ -161,7 +161,7 @@ const ChatInput = React.memo<ChatInputProps>(({ onSendMessage, isLoading, sessio
 });
 
 // ============================================
-// 2. WELCOME SCREEN VỚI REACT.MEMO
+// 2. Welcome screen
 // ============================================
 interface WelcomeScreenProps {
   sessionId: string | null;
@@ -178,20 +178,20 @@ const WelcomeScreen = React.memo<WelcomeScreenProps>(({
 }) => (
   <div className="flex flex-col items-center justify-center h-full text-center p-8 animate-fadeIn">
     <div className="mb-6" style={{ width: '280px', height: '146px' }}>
-      <OOSBrandIcon style={{ width: '100%', height: '100%' }} />
+      <BrandIcon style={{ width: '100%', height: '100%' }} />
     </div>
     <h1 className="text-4xl font-bold mb-2" style={{ 
       color: 'var(--color-text)',
       fontWeight: '700',
       letterSpacing: '-0.02em',
       lineHeight: '1.2'
-    }}>Humax Assistant</h1>
+    }}>Enterprise Knowledge Chat</h1>
     <p className="mt-2 max-w-md text-lg mb-6" style={{ 
       color: 'var(--color-textSecondary)',
       fontWeight: '400',
       lineHeight: '1.6',
       letterSpacing: '-0.01em'
-    }}>Biến kho tài liệu doanh nghiệp thành nguồn tri thức sống, sẵn sàng cung cấp câu trả lời tức thì cho mọi nhu cầu thông tin</p>
+    }}>Turn a folder of enterprise documents into answers you can trace back to a page</p>
     {sessionId && (
       <>
         <div className="flex items-center gap-2 px-4 py-2 rounded-lg mb-6" style={{ 
@@ -211,7 +211,7 @@ const WelcomeScreen = React.memo<WelcomeScreenProps>(({
             <div className="flex items-center justify-center gap-2">
               <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
               <span className="text-sm" style={{ color: 'var(--color-textSecondary)' }}>
-                Đang tạo câu hỏi mẫu...
+                Generating sample questions...
               </span>
             </div>
           </div>
@@ -222,7 +222,7 @@ const WelcomeScreen = React.memo<WelcomeScreenProps>(({
               fontWeight: '600',
               letterSpacing: '-0.01em'
             }}>
-              💡 Các câu hỏi gợi ý từ tài liệu
+              💡 Suggested questions from your documents
             </h3>
             
             {/* Horizontal scrollable questions - Better visibility */}
@@ -259,7 +259,7 @@ const WelcomeScreen = React.memo<WelcomeScreenProps>(({
                 color: 'var(--color-textTertiary)',
                 fontStyle: 'italic'
               }}>
-                Hiển thị 6/{sampleQuestions.length} câu hỏi gợi ý
+                Hiển thị 6/{sampleQuestions.length} suggestions
               </p>
             )}
           </div>
@@ -284,7 +284,7 @@ interface StreamingMessageProps {
 const StreamingMessage = React.memo<StreamingMessageProps>(({ streamingContent, statusMessage }) => (
   <div className="flex items-start gap-4">
     <div className="flex-shrink-0 rounded-full flex items-center justify-center shadow-lg overflow-hidden" style={{ width: '48px', height: '48px', background: 'var(--color-surface)', border: '2px solid var(--color-border)', padding: '0' }}>
-      <OOSBrandIcon style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      <BrandIcon style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
     </div>
     <div className="bg-slate-100 rounded-lg p-4 max-w-3xl shadow-sm">
       {statusMessage && !streamingContent && (
@@ -730,9 +730,9 @@ const App: React.FC = () => {
       if (file.size > MAX_FILE_SIZE_BYTES) {
         const fileSizeMB = file.size / (1024 * 1024);
         setError(
-          `File '${file.name}' quá lớn (${fileSizeMB.toFixed(2)} MB). ` +
-          `Kích thước tối đa cho phép: ${MAX_FILE_SIZE_MB} MB. ` +
-          `Vui lòng chia nhỏ file hoặc nén file.`
+          `File '${file.name}' is too large (${fileSizeMB.toFixed(2)} MB). ` +
+          `The limit is ${MAX_FILE_SIZE_MB} MB per file. ` +
+          `Split the document or compress it first.`
         );
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
@@ -742,9 +742,9 @@ const App: React.FC = () => {
     // Check total number of files (for new session)
     if (!sessionId && fileArray.length > MAX_FILES_PER_SESSION) {
       setError(
-        `Số lượng file vượt quá giới hạn. ` +
-        `Tối đa ${MAX_FILES_PER_SESSION} files mỗi session. ` +
-        `Bạn đã chọn ${fileArray.length} files.`
+        `Too many files. ` +
+        `A session holds at most ${MAX_FILES_PER_SESSION} files. ` +
+        `You selected ${fileArray.length}.`
       );
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
@@ -762,8 +762,8 @@ const App: React.FC = () => {
         if (totalSize > MAX_SESSION_SIZE_BYTES) {
           const totalSizeMB = totalSize / (1024 * 1024);
           setError(
-            `Tổng kích thước session vượt quá giới hạn (${totalSizeMB.toFixed(2)} MB / ${MAX_SESSION_SIZE_MB} MB). ` +
-            `Vui lòng xóa một số file cũ hoặc tạo session mới.`
+            `Session size limit exceeded (${totalSizeMB.toFixed(2)} MB of ${MAX_SESSION_SIZE_MB} MB). ` +
+            `Remove a few documents or start a new session.`
           );
           if (fileInputRef.current) fileInputRef.current.value = '';
           return;
@@ -771,8 +771,8 @@ const App: React.FC = () => {
         
         if (totalFiles > MAX_FILES_PER_SESSION) {
           setError(
-            `Số lượng file trong session vượt quá giới hạn (${totalFiles} / ${MAX_FILES_PER_SESSION}). ` +
-            `Vui lòng xóa một số file cũ hoặc tạo session mới.`
+            `Session file limit exceeded (${totalFiles} of ${MAX_FILES_PER_SESSION}). ` +
+            `Remove a few documents or start a new session.`
           );
           if (fileInputRef.current) fileInputRef.current.value = '';
           return;
@@ -1054,9 +1054,9 @@ const App: React.FC = () => {
               if (file.size > MAX_FILE_SIZE_BYTES) {
                 const fileSizeMB = file.size / (1024 * 1024);
                 setError(
-                  `File '${file.name}' quá lớn (${fileSizeMB.toFixed(2)} MB). ` +
-                  `Kích thước tối đa cho phép: ${MAX_FILE_SIZE_MB} MB. ` +
-                  `Vui lòng chia nhỏ file hoặc nén file.`
+                  `File '${file.name}' is too large (${fileSizeMB.toFixed(2)} MB). ` +
+                  `The limit is ${MAX_FILE_SIZE_MB} MB per file. ` +
+                  `Split the document or compress it first.`
                 );
                 return;
               }
@@ -1065,9 +1065,9 @@ const App: React.FC = () => {
             // Check total number of files (for new session)
             if (!sessionId && fileArray.length > MAX_FILES_PER_SESSION) {
               setError(
-                `Số lượng file vượt quá giới hạn. ` +
-                `Tối đa ${MAX_FILES_PER_SESSION} files mỗi session. ` +
-                `Bạn đã chọn ${fileArray.length} files.`
+                `Too many files. ` +
+                `A session holds at most ${MAX_FILES_PER_SESSION} files. ` +
+                `You selected ${fileArray.length}.`
               );
               return;
             }
@@ -1083,16 +1083,16 @@ const App: React.FC = () => {
                 if (totalSize > MAX_SESSION_SIZE_BYTES) {
                   const totalSizeMB = totalSize / (1024 * 1024);
                   setError(
-                    `Tổng kích thước session vượt quá giới hạn (${totalSizeMB.toFixed(2)} MB / ${MAX_SESSION_SIZE_MB} MB). ` +
-                    `Vui lòng xóa một số file cũ hoặc tạo session mới.`
+                    `Session size limit exceeded (${totalSizeMB.toFixed(2)} MB of ${MAX_SESSION_SIZE_MB} MB). ` +
+                    `Remove a few documents or start a new session.`
                   );
                   return;
                 }
                 
                 if (totalFiles > MAX_FILES_PER_SESSION) {
                   setError(
-                    `Số lượng file trong session vượt quá giới hạn (${totalFiles} / ${MAX_FILES_PER_SESSION}). ` +
-                    `Vui lòng xóa một số file cũ hoặc tạo session mới.`
+                    `Session file limit exceeded (${totalFiles} of ${MAX_FILES_PER_SESSION}). ` +
+                    `Remove a few documents or start a new session.`
                   );
                   return;
                 }
@@ -1151,7 +1151,7 @@ const App: React.FC = () => {
             {isLoading && !streamingContent && !statusMessage && (
                         <div className="flex items-start gap-4 animate-slide-in-bottom">
                 <div className="flex-shrink-0 rounded-full flex items-center justify-center shadow-lg overflow-hidden" style={{ width: '48px', height: '48px', background: 'var(--color-surface)', border: '2px solid var(--color-border)', padding: '0' }}>
-                  <OOSBrandIcon style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <BrandIcon style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             </div>
                             <div className="bg-slate-100 rounded-lg p-4 max-w-xl">
                                 <div className="flex items-center justify-center gap-1.5">

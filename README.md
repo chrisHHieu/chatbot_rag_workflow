@@ -4,6 +4,10 @@ A self-hosted document Q&A service: upload PDFs, DOCX or TXT files into an isola
 
 It runs as a single container: the FastAPI process serves both the API and the compiled React frontend.
 
+![Chat screen: a question about a signed MSA answered with page-level citations, next to the session's document list and a preview of page 4](docs/assets/chat-screen.png)
+
+*Static mockup of the chat screen, drawn from the React components and styles in `UI/`. Running it live needs `OPENAI_API_KEY` and PostgreSQL, so this is a render of the interface rather than a screenshot of a live session.*
+
 ## What it does
 
 - **Session-scoped indexes.** Every upload session gets its own document store and its own FAISS index. Sessions do not see each other's files.
