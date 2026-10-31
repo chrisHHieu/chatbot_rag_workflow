@@ -142,9 +142,9 @@ GitHub Actions runs the suite on every push to `main` and on every pull request:
 
 ## Deployment
 
-`.github/workflows/aws.yml` is a reference pipeline: once CI passes on `main` it builds the image, pushes it to ECR (`llmopsrepolive`), and updates an ECS Fargate service (`llmops-live-service` in `llmops-live-cluster`, region `us-east-1`) through a GitHub OIDC role. No long-lived AWS keys are stored in the repository.
+`.github/workflows/aws.yml` is a reference pipeline: it builds the image, pushes it to ECR (`llmopsrepolive`), and updates an ECS Fargate service (`llmops-live-service` in `llmops-live-cluster`, region `us-east-1`) through a GitHub OIDC role. No long-lived AWS keys are stored in the repository.
 
-**Status: the deploy job is a template, not a working pipeline right now.** Its last run (2026-04-16) failed after CI had passed. It needs an existing ECS cluster, service and task definition, an IAM role trusting `token.actions.githubusercontent.com`, and the role ARN in repository variables. Until that exists, disable the `workflow_run` trigger or point it at your own target.
+**Status: a template, not a working pipeline right now.** It is set to `workflow_dispatch` only, so it cannot red-flag every commit while the AWS side is missing. To use it you need an existing ECS cluster, service and task definition, an IAM role trusting `token.actions.githubusercontent.com`, and the role ARN in repository variables; then re-enable the `workflow_run` trigger commented at the top of the file. The one automatic run it did (2026-04-16) failed on those missing pieces after CI had passed.
 
 ## What this does not do
 

@@ -1,12 +1,15 @@
-name: CI/CD to ECS Fargate
+name: Deploy to ECS Fargate
 on:
-  workflow_run:
-    workflows: ["CI"] # Must match the "name" field in ci.yml
-    branches:
-      - main
-      - DeployOnAWS
-    types:
-      - completed
+  # Manual only. The deploy needs an ECS cluster, service, task definition and
+  # an OIDC role that are not provisioned for this repository yet, so running
+  # it automatically on every push would only leave a red mark on each commit.
+  # Re-enable the workflow_run trigger once the AWS side exists:
+  #
+  #   workflow_run:
+  #     workflows: ["CI"]
+  #     branches: [main]
+  #     types: [completed]
+  workflow_dispatch:
   workflow_call:
 env:
   AWS_REGION: us-east-1
