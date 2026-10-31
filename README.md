@@ -1,518 +1,167 @@
-# llmops_rag - Enterprise RAG System with LangGraph
+# llmops_rag
 
-Hệ thống RAG (Retrieval-Augmented Generation) enterprise-grade sử dụng **Hybrid Search** (FAISS + BM25) và **LangGraph** với persistent memory, được thiết kế để xử lý và trả lời câu hỏi từ tài liệu doanh nghiệp.
+A self-hosted document Q&A service: upload PDFs, DOCX or TXT files into an isolated session, then ask questions in a chat UI that streams answers and cites the file and page each claim came from. Retrieval is hybrid (dense + keyword), conversation state lives in PostgreSQL, and the workflow is built with LangGraph.
 
-## 🎯 Features
+It runs as a single container: the FastAPI process serves both the API and the compiled React frontend.
 
-### Core Capabilities
-- ✅ **Hybrid Search**: Kết hợp semantic search (FAISS) và keyword search (BM25) để tìm kiếm chính xác
-- ✅ **Multi-Document Support**: Hỗ trợ PDF, DOCX, TXT với session-based management
-- ✅ **Persistent Memory**: Lưu trữ lịch sử hội thoại trong PostgreSQL với conversation summarization
-- ✅ **Streaming Responses**: Real-time token-by-token streaming qua Server-Sent Events (SSE)
-- ✅ **Citation Support**: Tự động trích dẫn nguồn (file name và page number) trong câu trả lời
-- ✅ **Session Management**: Quản lý nhiều session độc lập, mỗi session có vector index riêng
-- ✅ **Modern Web UI**: React + TypeScript interface với drag-and-drop, document preview, và markdown rendering
+## What it does
 
-### Advanced Features
-- 🔄 **Conversation Summarization**: Tự động tóm tắt cuộc hội thoại dài để duy trì context
-- 📊 **Message Trimming**: Tự động cắt bớt messages cũ khi vượt token limit
-- 🎨 **Progressive Markdown Rendering**: Render markdown real-time trong quá trình streaming
-- 🗑️ **File Management**: Xóa file từ session, tự động cleanup khi session trống
-- 🔍 **Smart Retrieval**: LLM tự quyết định khi nào cần retrieve thông tin từ documents
+- **Session-scoped indexes.** Every upload session gets its own document store and its own FAISS index. Sessions do not see each other's files.
+- **Hybrid retrieval.** Dense search over `text-embedding-3-large` (weight 0.7) combined with BM25 keyword search (weight 0.3), then MMR re-ranking for diversity. The split exists because keyword search wins on exact strings (clause numbers, product codes, names) where embeddings blur them.
+- **The model decides when to retrieve.** A router node either answers directly or calls the retrieval tool, so greetings and follow-ups do not pay for a search.
+- **Citations.** Retrieved chunks are formatted as `[Source: file_name, Page: N]` before they reach the answer prompt, and the prompt instructs the model to keep them.
+- **Streaming over SSE.** Tokens are pushed as they are produced, with status events for the retrieval step so the UI is not silent during the search.
+- **Persistent memory.** LangGraph checkpoints into PostgreSQL, so a conversation survives a restart. Long threads are summarised by a dedicated node rather than truncated, and the summary replaces the older turns.
+- **Multi-document sessions** with idempotent ingest: re-uploading the same file does not duplicate chunks, and deleting a file rebuilds the index for that session.
 
-## 📁 Project Structure
+## Architecture
 
-```
-llmops_rag/
-├── main.py                          # CLI entry point (single PDF demo)
-├── requirements.txt                  # Python dependencies
-├── multi_doc_chat/                   # Main package
-│   ├── api/                         # FastAPI application
-│   │   ├── main.py                  # FastAPI app factory
-│   │   ├── schemas.py               # Pydantic request/response models
-│   │   └── routes/                  # API endpoints
-│   │       ├── chat.py              # Chat endpoints (streaming & non-streaming)
-│   │       ├── files.py             # File upload/ingest/delete
-│   │       ├── sessions.py          # Session management
-│   │       ├── config.py             # Configuration endpoint
-│   │       └── health.py             # Health checks
-│   ├── config/
-│   │   └── config.yaml              # Centralized configuration
-│   ├── exception/
-│   │   └── custom_exception.py     # Custom exception classes
-│   ├── logger/
-│   │   └── custom_logger.py        # Structured logging (structlog)
-│   ├── model/
-│   │   └── models.py                # Pydantic State model for LangGraph
-│   ├── prompts/
-│   │   └── prompt_library.py       # System & answer prompts
-│   ├── src/
-│   │   ├── document_ingestion/
-│   │   │   └── data_ingestion.py   # Document loading, chunking, hybrid retriever
-│   │   ├── document_chat/
-│   │   │   ├── graph_nodes.py       # LangGraph nodes (generate_query_or_respond, generate_answer)
-│   │   │   └── graph_builder.py    # Graph workflow builder
-│   │   └── session_runner.py        # CLI session runner
-│   └── utils/
-│       ├── api_key_manager.py       # API key management (.env, JSON)
-│       ├── checkpointer.py          # Postgres checkpoint setup
-│       ├── config_loader.py         # YAML config loader
-│       ├── document_ops.py          # Document loading utilities
-│       ├── file_io.py               # File I/O & filename mapping
-│       └── model_loader.py          # LLM & embedding loaders
-├── UI/                              # React + TypeScript frontend
-│   ├── App.tsx                      # Main React component
-│   ├── components/                   # React components
-│   │   ├── ChatMessage.tsx          # Chat message bubbles
-│   │   ├── ChatInput.tsx            # Message input with modern features
-│   │   ├── FileViewer.tsx           # Sidebar with file list & preview
-│   │   ├── DocxViewer.tsx           # DOCX renderer (mammoth.js)
-│   │   ├── MarkdownRenderer.tsx     # Markdown renderer (react-markdown)
-│   │   └── icons.tsx                # SVG icons
-│   ├── services/
-│   │   └── apiService.ts            # API client
-│   ├── types.ts                     # TypeScript interfaces
-│   ├── index.html                   # HTML entry point
-│   └── package.json                 # Frontend dependencies
-├── tests/                           # Test suite
-│   ├── unit/                        # Unit tests
-│   └── integration/                 # Integration tests
-├── data/                            # Uploaded documents (session-based)
-└── faiss_index/                     # FAISS vector indices (session-based)
+```mermaid
+flowchart TD
+    UI[React + TypeScript UI] -->|POST /upload| API[FastAPI]
+    UI -->|POST /chat/stream| API
+    API --> ING[DocumentIngestor]
+    ING --> SPLIT[Token chunker<br/>1000 tokens / 150 overlap]
+    SPLIT --> FAISS[(FAISS index<br/>per session)]
+    SPLIT --> BM25[(BM25 index<br/>per session)]
+    API --> GRAPH[LangGraph]
+    GRAPH --> ROUTER{generate_query_or_respond}
+    ROUTER -->|tool call| RET[retrieve: hybrid search + MMR]
+    RET --> ANS[generate_answer]
+    ROUTER -->|direct| ANS
+    ANS -->|SSE tokens| UI
+    GRAPH <--> PG[(PostgreSQL<br/>checkpoints + summaries)]
 ```
 
-## 🚀 Quick Start
+The graph:
 
-### Prerequisites
+```
+START -> summarize -> generate_query_or_respond
+                          |-> retrieve -> generate_answer -> END
+                          |-> END (direct answer)
+```
 
-- **Python 3.10+**
-- **Node.js 18+** (for UI)
-- **PostgreSQL** (for persistent memory)
-- **OpenAI API Key**
+## Repository map
 
-### 1. Installation
+```
+multi_doc_chat/
+  api/                 FastAPI app, routes, pydantic schemas
+  src/
+    document_ingestion/  loading, chunking, hybrid retriever, retriever tool
+    document_chat/       graph nodes and graph builder
+    session_runner.py    CLI runner (new / resume)
+  utils/               config loader, model loader, checkpointer, file I/O
+  config/config.yaml   every tunable in one file
+UI/                    React 19 + Vite + TypeScript frontend
+tests/unit             3 modules: ingestion, document ops, file I/O
+tests/integration      1 module: full session flows
+run_evaluations.py     LangSmith evaluation, LLM-as-judge correctness
+```
 
-#### Backend Setup
+## Quick start
+
+### Docker
 
 ```bash
-# Clone repository
-cd llmops_rag
+cp .env.example .env          # fill in OPENAI_API_KEY and POSTGRES_URI
+docker compose up --build
+# UI and API: http://localhost:8100
+```
 
-# Install Python dependencies
+PostgreSQL is external: point `POSTGRES_URI` at any reachable instance (a managed one is fine). Tables are created on first start. If you want the database in the same compose file, add one and change the URI to its service name.
+
+### Local
+
+```bash
+python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
+
+cd UI && npm ci && npm run build && cd ..
+
+uvicorn multi_doc_chat.api.main:app --port 8000 --reload
 ```
 
-#### Frontend Setup
+For frontend development with hot reload, run `npm run dev` inside `UI/` and set `VITE_API_BASE_URL=http://localhost:8000` in `UI/.env.local`; otherwise the UI calls the same origin it was served from.
+
+### CLI
 
 ```bash
-cd UI
-npm install
+# one-shot: index files and ask a question in the terminal
+python -m multi_doc_chat.src.session_runner new "What are the notice periods?" doc1.pdf doc2.docx
+
+# continue a previous session
+python -m multi_doc_chat.src.session_runner resume session_20251107_145458_d0fcb19d "And for contractors?"
 ```
 
-### 2. Configuration
+## Configuration
 
-#### Environment Variables
+Everything tunable lives in `multi_doc_chat/config/config.yaml`. Current defaults:
 
-Create a `.env` file in the project root:
+| Key | Value | Why |
+|---|---|---|
+| `embedding_model` | `text-embedding-3-large` | best retrieval quality on the OpenAI tier this was built against |
+| `hybrid_retriever` | vector 0.7 / bm25 0.3, MMR, `fetch_k` 20 | dense search carries paraphrase, BM25 carries exact strings |
+| `text_splitter` | 1000 tokens, 150 overlap, tiktoken | token counts match what the model is billed for |
+| `llm.response` | `gpt-4.1-mini`, temperature 0.3 | answers |
+| `llm.grader` | `gpt-4.1-mini`, temperature 0 | routing decisions |
+| `summarization` | summarise at 200k tokens | memory degrades long before the context window fills |
+| `file_limits` | 20 MB per file, 100 MB per session, 15 files | keeps one session from starving the process |
 
-```env
-# Required
-OPENAI_API_KEY=your_openai_api_key_here
+## API
 
-# Database (PostgreSQL)
-POSTGRES_URI=postgresql://user:password@localhost:5432/llmops_rag
-# Or use DB_URI (backward compatible)
-# DB_URI=postgresql://user:password@localhost:5432/llmops_rag
-
-# Optional: LangSmith (for tracing)
-LANGCHAIN_TRACING_V2=true
-LANGCHAIN_API_KEY=your_langsmith_api_key
-LANGCHAIN_PROJECT=llmops_rag
-```
-
-#### Configuration File
-
-Edit `multi_doc_chat/config/config.yaml` to customize:
-
-- **Embedding model**: Default `text-embedding-3-large`
-- **LLM models**: Response model (`gpt-4.1-mini`) and grader model (`gpt-4o-mini`)
-- **Hybrid retriever weights**: Vector (0.7) + BM25 (0.3)
-- **Text splitting**: Chunk size (800), overlap (150)
-- **Summarization**: Token limits and thresholds
-- **Message trimming**: Strategy and limits
-
-### 3. Database Setup
-
-Create PostgreSQL database:
-
-```sql
-CREATE DATABASE llmops_rag;
-```
-
-The system will automatically create required tables on first run.
-
-### 4. Run the Application
-
-#### Start Backend API
+| Method | Path | Purpose |
+|---|---|---|
+| POST | `/upload` | upload one or more files and create a session |
+| POST | `/ingest?session_id=` | add files to an existing session |
+| POST | `/chat` | blocking answer |
+| POST | `/chat/stream` | SSE stream with `status`, `token` and `done` events |
+| GET | `/sessions/{id}/status` | indexing state |
+| GET | `/sessions/{id}/files` | files in the session |
+| GET | `/sessions/{id}/history` | stored conversation |
+| GET | `/sessions/{id}/sample-questions` | suggested questions drawn from the indexed text |
+| DELETE | `/sessions/{id}/files/{name}` | remove one file and rebuild the index |
+| DELETE | `/sessions/{id}` | delete the session |
+| GET | `/health`, `/health/db` | liveness and database check |
+| GET | `/docs` | OpenAPI UI |
 
 ```bash
-# From project root
-python -m multi_doc_chat.api.main
-# Or
-uvicorn multi_doc_chat.api.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-Backend will be available at `http://localhost:8000`
-
-#### Start Frontend
-
-```bash
-cd UI
-npm run dev
-```
-
-Frontend will be available at `http://localhost:3000` (or Vite's default port)
-
-## 📖 Usage
-
-### CLI Usage
-
-#### Single PDF Demo (`main.py`)
-
-```bash
-python main.py
-```
-
-Edit `main.py` to customize:
-- `pdf_path`: Path to PDF file
-- `question`: User question
-- `thread_id`: Conversation thread ID
-
-#### Session Runner (`session_runner.py`)
-
-**Create new session with files:**
-```bash
-python -m multi_doc_chat.src.session_runner new "Your question here" file1.pdf file2.docx --k 5
-```
-
-**Resume existing session:**
-```bash
-python -m multi_doc_chat.src.session_runner resume session_20251107_145458_d0fcb19d "Follow-up question"
-```
-
-### API Usage
-
-#### Upload Files (Create Session)
-
-```bash
-curl -X POST "http://localhost:8000/upload" \
-  -F "files=@document1.pdf" \
-  -F "files=@document2.docx"
-```
-
-Response:
-```json
-{
-  "session_id": "session_20251107_145458_d0fcb19d",
-  "indexed": true,
-  "message": "Indexing complete"
-}
-```
-
-#### Add Files to Existing Session
-
-```bash
-curl -X POST "http://localhost:8000/ingest?session_id=session_20251107_145458_d0fcb19d" \
-  -F "files=@document3.pdf"
-```
-
-#### Streaming Chat
-
-```bash
-curl -X POST "http://localhost:8000/chat/stream" \
+curl -X POST http://localhost:8100/upload -F "files=@handbook.pdf"
+curl -N -X POST http://localhost:8100/chat/stream \
   -H "Content-Type: application/json" \
-  -d '{
-    "session_id": "session_20251107_145458_d0fcb19d",
-    "message": "What is the company policy on leave?"
-  }'
+  -d '{"session_id":"session_20251107_145458_d0fcb19d","message":"How much notice for resignation?"}'
 ```
 
-Response format (SSE):
-```
-data: {"type": "status", "content": "🔍 Đang tìm kiếm thông tin..."}
-
-data: {"type": "token", "content": "According"}
-
-data: {"type": "token", "content": " to"}
-
-...
-
-data: {"type": "done"}
-```
-
-#### Non-Streaming Chat
+## Tests and CI
 
 ```bash
-curl -X POST "http://localhost:8000/chat" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "session_id": "session_20251107_145458_d0fcb19d",
-    "message": "What is the company policy on leave?"
-  }'
+pytest tests/unit          # no network, no API key
+pytest tests/integration   # session flows
 ```
 
-#### List Session Files
+GitHub Actions runs the suite on every push to `main` and on every pull request: `uv` installs the pinned requirements, then `pytest -q` runs with a dummy `OPENAI_API_KEY`, so CI never reaches a paid API.
 
-```bash
-curl "http://localhost:8000/sessions/session_20251107_145458_d0fcb19d/files"
-```
+## Deployment
 
-#### Delete File from Session
+`.github/workflows/aws.yml` is a reference pipeline: once CI passes on `main` it builds the image, pushes it to ECR (`llmopsrepolive`), and updates an ECS Fargate service (`llmops-live-service` in `llmops-live-cluster`, region `us-east-1`) through a GitHub OIDC role. No long-lived AWS keys are stored in the repository.
 
-```bash
-curl -X DELETE "http://localhost:8000/sessions/session_20251107_145458_d0fcb19d/files/document.pdf"
-```
+**Status: the deploy job is a template, not a working pipeline right now.** Its last run (2026-04-16) failed after CI had passed. It needs an existing ECS cluster, service and task definition, an IAM role trusting `token.actions.githubusercontent.com`, and the role ARN in repository variables. Until that exists, disable the `workflow_run` trigger or point it at your own target.
 
-#### Delete Session
+## What this does not do
 
-```bash
-curl -X DELETE "http://localhost:8000/sessions/session_20251107_145458_d0fcb19d"
-```
+Written down so nobody infers it from the feature list:
 
-### Web UI Usage
+- **No authentication or tenancy.** The API is open and CORS is `*`. Put it behind an authenticating proxy before it faces anyone but you.
+- **One replica only.** FAISS indexes live on the API process's filesystem and session state is per process, so two containers behind a load balancer would not see each other's sessions.
+- **No reranker.** MMR improves diversity; it does not reorder by relevance with a cross-encoder.
+- **Retrieval quality is not measured here.** `run_evaluations.py` can score answers against a LangSmith dataset with an LLM judge, but no dataset ships with the repository, so there are no published accuracy numbers. The tests check plumbing, not answer quality.
+- **Long PDFs are slow to ingest**, because chunking and embedding run inline in the upload request.
 
-1. **Upload Documents**: Click upload button or drag-and-drop files
-2. **View Documents**: Click on file in sidebar to preview
-3. **Chat**: Type question in input field, press Enter to send
-4. **Streaming**: Watch real-time token-by-token response
-5. **Delete Files**: Hover over file and click delete icon
-6. **Session Persistence**: Session ID stored in localStorage
+## Cost, roughly
 
-## 🏗️ Architecture
+List prices at the time of writing, worth re-checking: `text-embedding-3-large` around $0.13 per million tokens, `gpt-4.1-mini` around $0.40 in / $1.60 out per million. A 200-page handbook is roughly 100k tokens, so about a cent to embed, and a question that retrieves eight chunks and answers in 300 tokens costs well under a cent.
 
-### Document Ingestion Flow
+## License
 
-```
-Upload Files
-    ↓
-Save to data/<session_id>/
-    ↓
-Load Documents (PDF/DOCX/TXT)
-    ↓
-Split into Chunks (RecursiveCharacterTextSplitter)
-    ↓
-Enrich Metadata (file_name, page_number, session_id, etc.)
-    ↓
-Create FAISS Index (with embeddings)
-    ↓
-Create BM25 Index (keyword search)
-    ↓
-Combine → Hybrid Retriever
-```
+MIT. See [LICENSE](LICENSE).
 
-### LangGraph Workflow
-
-```
-START
-  ↓
-Summarize (conversation summary)
-  ↓
-generate_query_or_respond
-  ├─→ [Needs retrieval] → retrieve → generate_answer → END
-  └─→ [Direct answer] → END
-```
-
-### Retrieval Process
-
-1. **User Question** → `generate_query_or_respond` node
-2. **LLM Decision**: Tool call (retrieve) or direct answer
-3. **If retrieve**: 
-   - Hybrid search (FAISS + BM25)
-   - Format documents with citations: `[Source: file_name, Page: page_number]`
-   - Return to `generate_answer` node
-4. **Generate Answer**: LLM synthesizes response with citations
-
-### Persistent Memory
-
-- **PostgreSQL Checkpoint**: Stores conversation state
-- **Conversation Summary**: Automatically summarizes long conversations
-- **Message Trimming**: Removes old messages when token limit exceeded
-- **Thread ID**: Each session has unique thread_id for conversation continuity
-
-## ⚙️ Configuration
-
-### `config.yaml` Structure
-
-```yaml
-embedding_model:
-  provider: "openai"
-  model_name: "text-embedding-3-large"
-
-hybrid_retriever:
-  vector_weight: 0.7      # Semantic search weight
-  bm25_weight: 0.3        # Keyword search weight
-  vector_k: 5             # Top k from vector search
-  bm25_k: 5               # Top k from BM25 search
-  search_type: "mmr"      # MMR for diversity
-  fetch_k: 15             # Documents to fetch before MMR
-  lambda_mult: 0.5        # Diversity parameter
-
-text_splitter:
-  chunk_size: 800
-  chunk_overlap: 150
-  add_start_index: true
-
-llm:
-  response:
-    provider: "openai"
-    model_name: "gpt-4.1-mini"
-    temperature: 0.3
-  grader:
-    provider: "openai"
-    model_name: "gpt-4o-mini"
-    temperature: 0
-
-summarization:
-  max_tokens: 2048
-  temperature: 0.1
-  max_tokens_total: 100000
-  max_tokens_before_summary: 80000
-  max_summary_tokens: 1000
-
-message_trimming:
-  strategy: "last"
-  max_tokens: 6000
-  start_on: "human"
-  end_on: ["human", "tool"]
-  include_system: true
-```
-
-## 🔧 Key Components
-
-### DocumentIngestor
-
-- `load_documents()`: Load PDF/DOCX/TXT files
-- `split_documents()`: Chunk documents with overlap
-- `create_hybrid_retriever()`: Combine FAISS + BM25
-- `create_retriever_tool()`: Create LangChain StructuredTool with citation formatting
-
-### ChatIngestor
-
-- Session-based multi-file ingestion
-- Idempotent document addition (no duplicates)
-- FAISS index management per session
-- Filename mapping (sanitized ↔ original)
-
-### FaissManager
-
-- Load or create FAISS index
-- Add documents idempotently
-- Delete by file_name or file_hash
-- Rebuild index when documents deleted
-
-### GraphNodes
-
-- `generate_query_or_respond()`: Decision node (retrieve or answer)
-- `generate_answer()`: Answer generation with citations
-
-### GraphBuilder
-
-- Builds LangGraph workflow
-- Integrates summarization node
-- Configures conditional edges
-
-## 📚 Dependencies
-
-### Backend
-
-- `langchain==1.0.3` - LangChain core
-- `langchain-openai==1.0.2` - OpenAI integrations
-- `langchain-community==0.4.1` - Community integrations
-- `langgraph==1.0.2` - LangGraph workflow orchestration
-- `langgraph-checkpoint-postgres==3.0.0` - PostgreSQL checkpoint
-- `langmem==0.0.30` - Conversation summarization
-- `faiss-cpu==1.12.0` - Vector similarity search
-- `rank-bm25==0.2.2` - BM25 keyword search
-- `langchain-classic==1.0.0` - Hybrid retriever
-- `pymupdf==1.26.5` - PDF processing
-- `psycopg-binary==3.2.12` - PostgreSQL driver
-- `fastapi` - Web framework (not in requirements.txt, should be added)
-
-### Frontend
-
-- `react==^19.2.0` - React framework
-- `react-dom==^19.2.0` - React DOM
-- `react-markdown==^10.1.0` - Markdown rendering
-- `remark-gfm==^4.0.1` - GitHub Flavored Markdown
-- `rehype-highlight==^7.0.2` - Syntax highlighting
-- `highlight.js==^11.11.1` - Highlight.js library
-- `mammoth==^1.11.0` - DOCX to HTML conversion
-- `vite==^6.2.0` - Build tool
-- `typescript==~5.8.2` - TypeScript
-
-## 🧪 Testing
-
-```bash
-# Run unit tests
-pytest tests/unit/
-
-# Run integration tests
-pytest tests/integration/
-```
-
-## 📝 API Documentation
-
-Once the backend is running, visit:
-- **Swagger UI**: `http://localhost:8000/docs`
-- **ReDoc**: `http://localhost:8000/redoc`
-
-## 🎨 UI Features
-
-- **Modern Design**: Tailwind CSS with custom color palette
-- **Drag & Drop**: Upload files by dragging into sidebar
-- **Document Preview**: View PDF, DOCX, and TXT files in sidebar
-- **Streaming Chat**: Real-time token-by-token updates
-- **Markdown Support**: Rich formatting with tables, lists, code blocks
-- **Citation Display**: Source file and page number in responses
-- **Session Management**: Visual session indicator
-- **Responsive**: Works on desktop and tablet
-
-## 🔍 Troubleshooting
-
-### Database Connection Issues
-
-Ensure PostgreSQL is running and `POSTGRES_URI` is correct:
-```bash
-psql -U postgres -c "SELECT 1"
-```
-
-### OpenAI API Key
-
-Verify API key is set:
-```bash
-echo $OPENAI_API_KEY
-```
-
-### FAISS Index Not Found
-
-If session index is missing, re-upload files to recreate the session.
-
-### Frontend Not Connecting
-
-Check `VITE_API_BASE_URL` in `UI/.env.local` matches backend URL.
-
-## 📄 License
-
-[Add your license here]
-
-## 🤝 Contributing
-
-[Add contribution guidelines here]
-
-## 📧 Contact
-
-[Add contact information here]
-
----
-
-**Built with ❤️ using LangGraph, LangChain, and React**
+Built by [Hoang Hieu Nguyen](https://github.com/chrisHHieu) with LangGraph, LangChain, FAISS and FastAPI.

@@ -72,9 +72,9 @@ async def chat_stream(
                         # Send status for tool nodes
                         if node_name not in valid_nodes and node_name not in ignored_tools:
                             tool_messages = {
-                                "retrieve": "🔍 Đang tìm kiếm thông tin...",
+                                "retrieve": "🔍 Searching the documents...",
                             }
-                            status_msg = tool_messages.get(node_name, "⚙️ Đang xử lý...")
+                            status_msg = tool_messages.get(node_name, "⚙️ Working...")
                             # JSON format with type field
                             yield f"data: {json.dumps({'type': 'status', 'content': status_msg}, ensure_ascii=False)}\n\n"
                             continue

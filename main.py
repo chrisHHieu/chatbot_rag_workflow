@@ -9,6 +9,7 @@ This script demonstrates the complete workflow:
 """
 
 import asyncio
+import sys
 from pathlib import Path
 from multi_doc_chat.src.document_ingestion.data_ingestion import DocumentIngestor
 from multi_doc_chat.src.document_chat.graph_nodes import GraphNodes
@@ -69,7 +70,7 @@ async def stream_response(pdf_path: str, question: str, thread_id: str = "defaul
             
             # Stream response
             valid_nodes = ["generate_query_or_respond", "generate_answer"]
-            ignored_tools = ["summarize"]  # không hiển thị summarizer
+            ignored_tools = ["summarize"]  # the summariser is internal, do not print it
             
             async for msg, metadata in graph.astream(
                 inputs,
@@ -78,16 +79,16 @@ async def stream_response(pdf_path: str, question: str, thread_id: str = "defaul
             ):
                 node_name = metadata.get("langgraph_node")
                 
-                # 🔹 Nếu node là tool nhưng không bị ignore -> hiển thị trạng thái
+                # Any node that is not an answer node is shown as a status line
                 if node_name not in valid_nodes and node_name not in ignored_tools:
                     tool_messages = {
-                        "retrieve": "🤖 Đang tìm kiếm thông tin...",
+                        "retrieve": "🤖 Searching the documents...",
                     }
-                    msg_tool = tool_messages.get(node_name, "🤖 Đang tổng hợp thông tin...")
+                    msg_tool = tool_messages.get(node_name, "🤖 Composing an answer...")
                     print(f"\n{msg_tool}\n", flush=True)
                     continue
                 
-                # 🔹 Nếu là node sinh ra nội dung chat thì in bình thường
+                # Answer nodes print tokens as they arrive
                 if (
                     msg.content
                     and node_name in valid_nodes
@@ -103,20 +104,22 @@ async def stream_response(pdf_path: str, question: str, thread_id: str = "defaul
 
 
 def main():
-    """Main function."""
-    # Configuration
-    pdf_path = "OOS_Nội quy lao động_2025_Final.pdf"
-    question = "THỜI GIAN ĐI LÀM ở công ty OOS TỪ MẤY GIỜ ĐẾN MẤY GIỜ, CHI TIẾT NHẤT"
-    thread_id = "some_thread_id_1"
+    """Ask one question about one document from the command line."""
+    # Usage: python main.py [path.pdf] ["your question"]
+    pdf_path = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("sample.pdf")
+    question = (
+        sys.argv[2]
+        if len(sys.argv) > 2
+        else "Summarise the main obligations this document places on an employee."
+    )
+    thread_id = "cli_demo_thread"
     
-    # Check if PDF exists
-    if not Path(pdf_path).exists():
-        print(f"❌ PDF file not found: {pdf_path}")
-        print("Please ensure the PDF file exists in the current directory.")
+    if not pdf_path.exists():
+        print(f"PDF file not found: {pdf_path}")
+        print('Usage: python main.py [path.pdf] ["your question"]')
         return
     
-    # Run async workflow
-    asyncio.run(stream_response(pdf_path, question, thread_id))
+    asyncio.run(stream_response(str(pdf_path), question, thread_id))
 
 
 if __name__ == "__main__":

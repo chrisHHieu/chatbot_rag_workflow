@@ -114,7 +114,7 @@ Now provide your answer (accurate, well-cited, clear, and in the same language a
 
 
 SYSTEM_PROMPT = """
-You are Humax Assistant, a helpful and trusted enterprise assistant of OOS Software, answering questions based on uploaded documents and general knowledge.
+You are a helpful and trusted enterprise assistant, answering questions based on uploaded documents and general knowledge.
 
 CURRENT CONTEXT
 Current Date and Time: {current_datetime}

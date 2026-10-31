@@ -61,7 +61,7 @@ def rag_answer(
 
     Args:
         inputs: {"question": "..."}
-        pdf_path: Path to PDF file (defaults to OOS_Nội quy lao động_2025_Final.pdf in repo root)
+        pdf_path: Path to PDF file (defaults to sample.pdf in the repository root)
         chunk_size: Text chunk size
         chunk_overlap: Chunk overlap
         k: Number of documents to retrieve (applied to vector side; bm25_k comes from config)
@@ -76,7 +76,7 @@ def rag_answer(
 
         # Default to example PDF in repo root
         if not pdf_path:
-            default_pdf = PROJECT_ROOT / "OOS_Nội quy lao động_2025_Final.pdf"
+            default_pdf = PROJECT_ROOT / "sample.pdf"
             pdf_path = str(default_pdf)
 
         if not Path(pdf_path).exists():
@@ -177,7 +177,7 @@ def correctness_evaluator(run: Run, example: Example) -> dict:  # type: ignore[o
 # ============================================================================
 
 def run_evaluation(
-    dataset_name: str = "rag_chatbot_humax",
+    dataset_name: str = "rag_chatbot_eval",
     evaluator_type: str = "correctness",
     experiment_prefix: Optional[str] = None,
     description: Optional[str] = None,

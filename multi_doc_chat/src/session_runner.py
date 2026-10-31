@@ -60,9 +60,9 @@ async def _stream_graph_response(retriever, question: str, thread_id: str, *, us
 
                     if node_name not in valid_nodes and node_name not in ignored_tools:
                         tool_messages = {
-                            "retrieve": "\n🤖 Đang tìm kiếm thông tin...\n",
+                            "retrieve": "\n🤖 Searching the documents...\n",
                         }
-                        print(tool_messages.get(node_name, "\n🤖 Đang tổng hợp thông tin...\n"), flush=True)
+                        print(tool_messages.get(node_name, "\n🤖 Composing an answer...\n"), flush=True)
                         continue
 
                     if (
@@ -93,8 +93,8 @@ async def _stream_graph_response(retriever, question: str, thread_id: str, *, us
             ):
                 node_name = metadata.get("langgraph_node")
                 if node_name not in valid_nodes and node_name not in ignored_tools:
-                    tool_messages = {"retrieve": "\n🤖 Đang tìm kiếm thông tin...\n"}
-                    print(tool_messages.get(node_name, "\n🤖 Đang tổng hợp thông tin...\n"), flush=True)
+                    tool_messages = {"retrieve": "\n🤖 Searching the documents...\n"}
+                    print(tool_messages.get(node_name, "\n🤖 Composing an answer...\n"), flush=True)
                     continue
                 if (
                     getattr(msg, "content", None)

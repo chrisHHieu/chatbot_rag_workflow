@@ -7,8 +7,8 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        # Empty string = relative URL (same origin) - KHÔNG cần điền URL server
-        # Frontend và backend cùng domain → browser tự động dùng current origin
+        # Empty string = relative URL (same origin). The frontend and the API are
+        # served from one domain, so the browser uses the current origin by default.
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
     container_name: llmops_rag_backend
     environment:
